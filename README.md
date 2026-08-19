@@ -6,9 +6,18 @@ This mimics workflows used for embedded edge deployment of time-series/telemetry
 
 ##  Why do this?
 - **Interoperability:** ONNX handles RNNs (like GRUs) smoothly, allowing you to deploy them to NPUs, edge CPUs, or microcontrollers.
-- **Quantization (FP16 & INT8):** 
-  - **FP16:** Shrinks the model by exactly 50% with practically zero accuracy loss. Ideal for NPUs and modern GPUs.
-  - **INT8:** Shrinks the model by ~75% and uses fast integer math. Ideal for CPU inference.
+- **Faster Inference & Smaller Size:** Quantization dramatically reduces memory footprint and accelerates inference on resource-constrained devices.
+
+## 🧠 Understanding Quantization
+
+### The Data Types: FP16 vs. INT8
+Quantization shrinks the mathematical numbers inside your model (which default to 32-bit floating point, or FP32).
+* **FP16 (16-bit Floating Point):** Reduces the model size by exactly **50%**. It maintains near-perfect accuracy because the numbers remain decimals. It is highly optimized for modern GPUs and NPUs.
+* **INT8 (8-bit Integer):** Reduces the model size by **~75%**. It converts complex decimals into whole numbers, which can cause a slight accuracy drop. However, it is incredibly fast on regular CPUs and embedded Edge devices because integer math is computationally cheaper.
+
+### The Methods: Dynamic vs. Static
+* **Dynamic Quantization (Used in this repo):** The model's weights are converted to INT8 ahead of time, but the activations (data flowing through the network) are quantized *on-the-fly* during inference. This is highly recommended for **RNNs, GRUs, and LSTMs**, and it requires no extra calibration data.
+* **Static Quantization:** Both weights and activations are locked into INT8 ahead of time. This requires feeding the model a "Calibration Dataset" beforehand so it can learn how to scale the integers correctly. This method provides the absolute fastest inference and is strictly required by many hardware accelerators (like the Qualcomm Hexagon NPU).
 
 ##  Project Structure
 
