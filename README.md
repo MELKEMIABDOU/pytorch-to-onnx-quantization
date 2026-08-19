@@ -8,7 +8,7 @@ This mimics workflows used for embedded edge deployment of time-series/telemetry
 - **Interoperability:** ONNX handles RNNs (like GRUs) smoothly, allowing you to deploy them to NPUs, edge CPUs, or microcontrollers.
 - **Faster Inference & Smaller Size:** Quantization dramatically reduces memory footprint and accelerates inference on resource-constrained devices.
 
-## 🧠 Understanding Quantization
+##  Understanding Quantization
 
 ### The Data Types: FP16 vs. INT8
 Quantization shrinks the mathematical numbers inside your model (which default to 32-bit floating point, or FP32).
