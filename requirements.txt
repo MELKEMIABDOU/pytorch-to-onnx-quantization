@@ -1,5 +1,5 @@
 torch
-torchvision
 onnx
 onnxruntime
 numpy
+onnxconverter-common

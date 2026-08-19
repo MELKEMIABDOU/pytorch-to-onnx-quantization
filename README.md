@@ -1,31 +1,37 @@
-# PyTorch to ONNX & Quantization Pipeline
+# PyTorch GRU to ONNX & Quantization Pipeline
 
-This repository provides a step-by-step guide and implementation for exporting a PyTorch model to the ONNX format and applying INT8 dynamic quantization using ONNX Runtime. 
+This repository provides a step-by-step guide for exporting a Recurrent Neural Network (GRU) from PyTorch to the ONNX format, and applying both **FP16** and **INT8** quantization. 
+
+This mimics workflows used for embedded edge deployment of time-series/telemetry data models.
 
 ## 🚀 Why do this?
-- **Interoperability:** ONNX is an open standard format built to represent machine learning models. Once in ONNX, you can run your model on multiple platforms (C++, Java, JS) and hardware accelerators (GPUs, NPUs).
-- **Quantization:** By converting model weights from 32-bit floating-point (FP32) to 8-bit integers (INT8), you can reduce the model size by roughly 4x and significantly speed up CPU inference without losing much accuracy.
+- **Interoperability:** ONNX handles RNNs (like GRUs) smoothly, allowing you to deploy them to NPUs, edge CPUs, or microcontrollers.
+- **Quantization (FP16 & INT8):** 
+  - **FP16:** Shrinks the model by exactly 50% with practically zero accuracy loss. Ideal for NPUs and modern GPUs.
+  - **INT8:** Shrinks the model by ~75% and uses fast integer math. Ideal for CPU inference.
 
 ## 📁 Project Structure
 
-* `1_train_model.py`: Downloads a pre-trained MobileNetV2 from PyTorch and saves its weights (`.pth`).
-* `2_export_onnx.py`: Loads the `.pth` weights and exports the model to an `.onnx` graph using `torch.onnx.export`.
-* `3_quantize_model.py`: Reads the standard `.onnx` model and applies dynamic INT8 quantization using `onnxruntime`.
-* `4_benchmark.py`: Runs a comparison between the `.pth`, FP32 `.onnx`, and INT8 `.onnx` models, measuring file size and CPU inference speed.
+* `model.py`: Defines the PyTorch `SimpleGRU` architecture (simulating a 24-feature, 128-sequence telemetry model).
+* `1_train_model.py`: Initializes the GRU and saves the `.pth` weights.
+* `2_export_onnx.py`: Loads the `.pth` weights and traces the sequence logic into an `.onnx` graph using `torch.onnx.export`.
+* `3_quantize_model.py`: Generates two optimized models: an **FP16** ONNX model and an **INT8** dynamically quantized ONNX model.
+* `4_benchmark.py`: Runs a benchmark comparing `.pth`, FP32 `.onnx`, FP16 `.onnx`, and INT8 `.onnx` for size and CPU speed.
 
 ## 🛠️ Setup & Installation
 
-It is recommended to run this inside a virtual environment. Install the required dependencies using:
+Install the required dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
+*(Note: `onnxconverter-common` is required specifically for the FP16 conversion).*
 
 ## 🏃 How to run
 
-Run the steps in order to see the full pipeline:
+Run the steps in order:
 
-1. **Get the base model**
+1. **Initialize the model**
    ```bash
    python 1_train_model.py
    ```
@@ -33,7 +39,7 @@ Run the steps in order to see the full pipeline:
    ```bash
    python 2_export_onnx.py
    ```
-3. **Quantize the Model**
+3. **Apply FP16 and INT8 Quantization**
    ```bash
    python 3_quantize_model.py
    ```
@@ -41,8 +47,3 @@ Run the steps in order to see the full pipeline:
    ```bash
    python 4_benchmark.py
    ```
-
-## 📊 Expected Results
-When you run the benchmark, you should observe:
-1. **Size reduction:** The quantized ONNX model will be approximately 1/4 the size of the original PyTorch model (and the standard ONNX model).
-2. **Speedup:** The INT8 ONNX model should run significantly faster on CPU compared to standard PyTorch FP32 inference.

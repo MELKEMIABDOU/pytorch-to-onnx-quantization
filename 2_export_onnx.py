@@ -1,34 +1,32 @@
 import torch
-import torchvision.models as models
+from model import SimpleGRU
 
 def export_to_onnx():
-    print("Loading model...")
-    # Initialize the same model architecture
-    model = models.mobilenet_v2()
+    print("Loading GRU model...")
+    model = SimpleGRU()
     
-    # Load the weights
-    # Note: weights_only=True is a security best practice when loading untrusted models
-    model.load_state_dict(torch.load("mobilenet_v2.pth", weights_only=True))
+    # Load weights
+    model.load_state_dict(torch.load("simple_gru.pth", weights_only=True))
     model.eval()
 
-    # Create dummy input for the model
-    # MobileNetV2 takes 3-channel RGB images of size 224x224
-    dummy_input = torch.randn(1, 3, 224, 224)
+    # Generate dummy input matching telemetry shape
+    # Shape: (batch_size=1, sequence_length=128, input_features=24)
+    dummy_input = torch.randn(1, 128, 24)
 
-    onnx_path = "mobilenet_v2.onnx"
+    onnx_path = "simple_gru.onnx"
     print(f"Exporting model to {onnx_path}...")
     
-    # Export the model
+    # Export model to ONNX format
     torch.onnx.export(
-        model,                               # Model being run
-        dummy_input,                         # Model input
-        onnx_path,                           # Where to save the model
-        export_params=True,                  # Store the trained parameter weights inside the model file
-        opset_version=14,                    # The ONNX version to export the model to
-        do_constant_folding=True,            # Whether to execute constant folding for optimization
-        input_names=['input'],               # the model's input names
-        output_names=['output'],             # the model's output names
-        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}} # variable length axes
+        model,                               # Target model
+        dummy_input,                         # Dummy input tensor
+        onnx_path,                           # Output file path
+        export_params=True,                  # Embed weights in the ONNX file
+        opset_version=14,                    # Use opset 14 for optimal RNN support
+        do_constant_folding=True,            # Optimize graph with constant folding
+        input_names=['input_telemetry'],     # Define input node name
+        output_names=['output'],             # Define output node name
+        dynamic_axes={'input_telemetry': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
     )
     print("Export complete!")
 

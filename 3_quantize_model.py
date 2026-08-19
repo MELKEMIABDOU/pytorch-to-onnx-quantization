@@ -1,26 +1,38 @@
 from onnxruntime.quantization import quantize_dynamic, QuantType
+import onnx
+from onnxconverter_common import float16
 import os
 
-def quantize_onnx_model():
-    model_input = "mobilenet_v2.onnx"
-    model_output = "mobilenet_v2_quantized.onnx"
-
-    if not os.path.exists(model_input):
-        print(f"Error: {model_input} not found. Please run step 2 (export) first.")
-        return
-
+def quantize_to_int8(model_input, model_output):
     print(f"Quantizing {model_input} dynamically to INT8...")
     
-    # Perform dynamic quantization
-    # Dynamic quantization converts the weights to INT8, but activations remain in FP32
-    # and are quantized on-the-fly during inference. This is easiest to apply and great for CPUs.
+    # Apply dynamic INT8 quantization for CPU inference optimization
     quantize_dynamic(
         model_input=model_input,
         model_output=model_output,
         weight_type=QuantType.QInt8
     )
+    print(f"INT8 model saved to {model_output}")
+
+def quantize_to_fp16(model_input, model_output):
+    print(f"Quantizing {model_input} statically to FP16...")
     
-    print(f"Quantized model saved to {model_output}")
+    # Convert model to FP16 to reduce size for GPU/NPU deployment
+    onnx_model = onnx.load(model_input)
+    fp16_model = float16.convert_float_to_float16(onnx_model)
+    onnx.save(fp16_model, model_output)
+    print(f"FP16 model saved to {model_output}")
+
+def main():
+    model_input = "simple_gru.onnx"
+    
+    if not os.path.exists(model_input):
+        print(f"Error: {model_input} not found. Run export script first.")
+        return
+
+    quantize_to_int8(model_input, "simple_gru_int8.onnx")
+    print("-" * 30)
+    quantize_to_fp16(model_input, "simple_gru_fp16.onnx")
 
 if __name__ == "__main__":
-    quantize_onnx_model()
+    main()
